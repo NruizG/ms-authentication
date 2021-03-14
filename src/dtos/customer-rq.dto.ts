@@ -1,7 +1,7 @@
 import { IsEmail, IsNotEmpty, IsString } from "class-validator";
 import { Customer } from "src/models/customer.model";
 
-export class CustomerRQ implements Customer{
+export class CustomerRQ implements Partial<Customer>{
   @IsNotEmpty()
   @IsString()
   public name: string;
