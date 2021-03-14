@@ -1,4 +1,5 @@
-import { BadRequestException, ConflictException, ForbiddenException, HttpService, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException,
+  HttpService, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AxiosResponse } from 'axios';
 import { ConfigService } from '@nestjs/config';
 import { RequestQueryBuilder } from '@nestjsx/crud-request';
@@ -10,7 +11,7 @@ import { AccountsService } from '../accounts/accounts.service';
 import { LoginRQ } from 'src/dtos/login-rq.dto';
 import { LoginRS } from 'src/dtos/login-rs.dto';
 import { Customer } from 'src/models/customer.model';
-import { sign } from 'jsonwebtoken';
+import { decode, sign, verify } from 'jsonwebtoken';
 
 @Injectable()
 export class CustomersService {
@@ -52,9 +53,10 @@ export class CustomersService {
         const customerRs = new CustomerRS(found);
         return new LoginRS({
           customer: customerRs,
-          token: sign({ data: customerRs }, this.jwtSecret, {
-            expiresIn: this.jwtExpireTime
-          })
+          token: sign({
+            data: customerRs,
+            exp: Math.floor(Date.now() / 1000) + Number(this.jwtExpireTime)
+          }, this.jwtSecret)
         });
       }
 
@@ -62,6 +64,19 @@ export class CustomersService {
     }
 
     throw new ForbiddenException();
+  }
+
+  public async verifyToken(auth: string): Promise<any> {
+    return new Promise<any>(resolve => {
+      verify(auth, this.jwtSecret, (err, decoded: any) => {
+        if (err) throw new UnauthorizedException();
+
+        resolve(new LoginRS({
+          customer: decoded?.data,
+          token: auth
+        }));
+      });
+    })
   }
 
   public async findUserByDni(dni: string): Promise<Customer> {
