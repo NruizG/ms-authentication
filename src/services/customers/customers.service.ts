@@ -82,7 +82,7 @@ export class CustomersService {
   public async findUserByDni(dni: string): Promise<Customer> {
     return new Promise<Customer>((resolve, reject) => {
       const query = RequestQueryBuilder.create()
-      .setFilter({ field: 'dni', operator: '$eq', value: dni });
+        .setFilter({ field: 'dni', operator: '$eq', value: dni });
       this.http.get<Customer[]>(`${this.path}/customers?${this.parser.parse(query)}`)
         .subscribe((response: AxiosResponse<Customer[]>) => {
           resolve(
